@@ -4,6 +4,9 @@
  * main.c
  */
 
+void hex4Digit(int number, int delay);
+void write2_7segment(int data, int index);
+
 // The order of the bits for 7-Seg display is 0bABCDEFGP
 volatile unsigned int index[16] = { // 7-Seg Mapping
     0b11111100, // 0
@@ -22,7 +25,7 @@ volatile unsigned int index[16] = { // 7-Seg Mapping
     0b01111010, // d <- No Capital D in 7Seg
     0b10011110, // E
     0b10001110  // F
-    // PS: More Letters are Possible with 7Seg, Me Me lazy
+    // TODO: More Letters are Possible with 7Seg, Me Me lazy
 };
 
 int main(void) { // TODO: Remove This Comment
@@ -34,8 +37,8 @@ int main(void) { // TODO: Remove This Comment
 
     P2DIR |= BIT0 + BIT3 + BIT4;   // Set Pin-2.(0/3/4) to output for pin 14/11/12 of IC102
 
-    int n=0, count = 0;
-    while(1){ // Hex Timer
+    int n=0;
+    while(1){ // Hex Counter
         for(n=0; n<1000;n++){
             hex4Digit(n,100);
         }
@@ -45,7 +48,7 @@ int main(void) { // TODO: Remove This Comment
 //delay in msec
 void hex4Digit(int number, int delay){ // Hex to 7Seg
 
-    int k = 0 , first, second, third, last;
+    int k = 0;
 
     // Decimal To Hex Conversion
     int d4 = number % 16;
@@ -53,19 +56,14 @@ void hex4Digit(int number, int delay){ // Hex to 7Seg
     int d2 = (number / (16 * 16)) % 16;
     int d1 = (number / (16 * 16 * 16)) % 16;
 
-    first = index[d1];
-    second = index[d2];
-    third = index[d3];
-    last = index[d4];
-
     for(k=0;k<delay*0.4;k++){
-        write2_7segment(first,4);
+        write2_7segment(index[d1],4);
         __delay_cycles(10000);
-        write2_7segment(second,3);
+        write2_7segment(index[d2],3);
         __delay_cycles(10000);
-        write2_7segment(third,2);
+        write2_7segment(index[d3],2);
         __delay_cycles(10000);
-        write2_7segment(last,1);
+        write2_7segment(index[d4],1);
         __delay_cycles(10000);
     }
 }
