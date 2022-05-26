@@ -1,2 +1,2 @@
 # LPUK-7Seg
-UsluKukla V3.2 7-Seg Driver
+7-Segment Driver for UsluKukla V3.2 Booster
