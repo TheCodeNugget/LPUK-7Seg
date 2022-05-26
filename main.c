@@ -33,7 +33,7 @@ int main(void) { // TODO: Remove This Comment
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     DCOCTL = 0;                 // Select lowest DCOx and MODx settings
     BCSCTL1 = CALBC1_16MHZ;     // Set range
-    DCOCTL = CALDCO_16MHZ;      // 1 cycle = 1s/16MHz = 625ns
+    DCOCTL = CALDCO_16MHZ;      // 1 cycle = 1s/16MHz = 62.5ns
 
     P2DIR |= BIT0 + BIT3 + BIT4;   // Set Pin-2.(0/3/4) to output for pin 14/11/12 of IC102
 
@@ -68,6 +68,23 @@ void hex4Digit(int number, int delay){ // Hex to 7Seg
     }
 }
 
+//
+//             IC102                      IC104                IC106
+//            +------------+             +------------+       +------------+
+//            |            |             |            |       |            |
+//        P2.0|SER       QA|a     *----->|SER       QA|------>|B1        C1|C1      * a/b/c/d/e/f/g/dp <== Data lines to 7-Seg
+//        P2.3|SRCLK     QB|b     |  P2.3|SRCLK     QB|------>|B2        C2|C2      * C1/C2/C3/C4 <== Power Pins to 7-Seg, Poll High to Display data on corresponding digit
+//        P2.4|RCLK      QC|c     |  P2.4|RCLK      QC|------>|B3        C3|C3
+//            |          QD|d     |      |          QD|------>|B4        C4|C4
+//            |          QE|e     |      |          QE|       |            |
+//            |          QG|f     |      |          QF|       |            |
+//            |          QF|g     |      |          QG|       |            |
+//            |          QH|dp    |      |          QH|       |            |
+//            |         QH'|------*      |         QH'|       |            |
+//            +------------+             +------------+       +------------+
+//             TI-SN74HC                  TI-SN74HC            ULN203AD
+
+
 void write2_7segment(int data, int index){
     volatile unsigned int sck=0x0008; // Pin-2.3
     volatile unsigned int rck=0x0010; // Pin-2.4
@@ -75,7 +92,7 @@ void write2_7segment(int data, int index){
     volatile unsigned int i=0;
 
 
-    for(i=0;i<4;i++){ // Fill IC102 to Write into IC104
+    for(i=0;i<4;i++){ // Fill Lower 4 Bits of IC 102 with 0
         P2OUT=0;
         __delay_cycles(1);
         P2OUT=sck;
@@ -84,7 +101,7 @@ void write2_7segment(int data, int index){
         __delay_cycles(1);
 
     }
-    for(i=0;i<4;i++){ // Write Into IC104 for 7-Seg Power
+    for(i=0;i<4;i++){ // Fill Upper 4 Bits of IC102
 
         if(index==1){ //Write 1 to Operated Digit C
             P2OUT=1;
@@ -104,7 +121,7 @@ void write2_7segment(int data, int index){
         index=index-1;
     }
 
-    for(i=0;i<8;i++){ // Rewrite IC102 With the Digit Data
+    for(i=0;i<8;i++){ // Write 7-Seg Message into IC102, pushes the existing message to IC104
         bit=data & 1; // Grab 1st Bit of Data
         __delay_cycles(1);
         P2OUT=bit; // Write bit Value to Output
